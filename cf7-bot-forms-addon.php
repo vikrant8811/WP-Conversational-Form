@@ -24,31 +24,24 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
 		$base_dir = plugin_dir_path( __FILE__ );
 		return ($append ? $base_dir . $append : $base_dir);
 	}
-
 	include_once( cf7bot_root_dir('inc/constants.php') );
-
 	function cf7bot_enqueue( $hook ) {
     if ( !strpos( $hook, 'wpcf7' ) )
     	return;
-
     wp_enqueue_style( 'cf7bot-styles',
     	cf7bot_root_url('assets/css/styles.css'),
     	false,
     	cf7BOT_VERSION );
-
 		wp_enqueue_script( 'cf7bot-scripts', cf7bot_root_url('assets/js/scripts.js'), array('jquery'), cf7BOT_VERSION );
         wp_enqueue_style( 'cf7bo-gform', cf7bot_root_url( '/assets/gform/conversational-form.min.css' ), array( 'webflow' ), '1.0' );
         wp_enqueue_script( 'cf7bo-gform', cf7bot_root_url( '/assets/gform/conversational-form.min.js' ), array( 'jquery' ), '1.0', false );
-
 	}
 	function cf7bot_enqueue_front( $hook ) {
         wp_enqueue_style( 'cf7bo-gform', cf7bot_root_url( '/assets/gform/conversational-form.min.css' ), array( 'webflow' ), '1.0' );
         wp_enqueue_script( 'cf7bo-gform', cf7bot_root_url( '/assets/gform/conversational-form.min.js' ), array( 'jquery' ), '1.0', false );
-
 	}
 	add_action( 'admin_enqueue_scripts', 'cf7bot_enqueue' );
     add_action( 'wpcf7_enqueue_scripts', 'cf7bot_enqueue_front' );
-
 	function cf7bot_admin_panel ( $panels ) {
 		$new_page = array(
 			'bot-forms-addon' => array(
@@ -58,10 +51,8 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
 		);
 		$panels = array_merge($panels, $new_page);
 		return $panels;
-		
 	}
 	add_filter( 'wpcf7_editor_panels', 'cf7bot_admin_panel' );
-
 	function cf7bot_admin_panel_content( $cf7 ) {
 		$post_id = sanitize_text_field($_GET['post']);
         $enabled = get_post_meta($post_id, "_cf7bot_enabled", true);
@@ -70,17 +61,11 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
         $form_outer = get_post_meta($post_id, "_cf7bot_form_outer", true);
 		$form_fields_str = get_post_meta($post_id, "_cf7bot_form_fields", true);
 		$form_fields = $form_fields_str ? unserialize($form_fields_str) : false;
-        //print_r($form_fields);
-
 		$template = cf7bot_get_view_template('form-fields.tpl.php');
-
 		if($form_fields) {
-
 			$form_fields_html = '';
 			$count = 1;
-
 			foreach ($form_fields as $key => $value) {
-
 				$search_replace = array(
 					'{first_field}' => ' first_field',
 					'{field_name}' => $key,
@@ -88,21 +73,14 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
 					'{add_button}' => '<a href="#" class="button add_field">Add Another Field</a>',
 					'{remove_button}' => '<a href="#" class="button remove_field">Remove Field</a>',
 				);
-
 				$search = array_keys($search_replace);
 				$replace = array_values($search_replace);
-
 				if($count >  1) $replace[0] = $replace[3] = '';				
 				if($count == 1) $replace[4] = '';
-
 				$form_fields_html .= str_replace($search, $replace, $template);
-
 				$count++;
-
 			}
-
 		} else {
-
 			$search_replace = array(
 				'{first_field}' => ' first_field',
 				'{field_name}' => '',
@@ -110,16 +88,10 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
 				'{add_button}' => '<a href="#" class="button add_field">Add Another Field</a>',
 				'{remove_button}' => '',
 			);
-
 			$search = array_keys($search_replace);
 			$replace = array_values($search_replace);
-
 			$form_fields_html = str_replace($search, $replace, $template);
-
 		}
-
-
-
 		$search_replace = array(
             '{enabled}' => ($enabled == 1 ? ' checked' : ''),
             '{toggle}' => $toggle,
@@ -127,54 +99,33 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
             '{form_outer}' => $form_outer,
 			'{form_fields_html}' => $form_fields_html,
 		);
-
 		$search = array_keys($search_replace);
 		$replace = array_values($search_replace);
-
 		$template = cf7bot_get_view_template('ui-tabs-panel.tpl.php');
-
 		$admin_table_output = str_replace($search, $replace, $template);
-
 		echo $admin_table_output;
-
 	}
-
 	function cf7bot_get_view_template( $template_name ) {
-
 		$template_content = false;
 		$template_path = cf7BOT_VIEWS_DIR . $template_name;
-
 		if( file_exists($template_path) ) {
-
 			$search_replace = array(
 				"<?php if(!defined( 'ABSPATH')) exit; ?>" => '',
 				"{plugin_url}" => cf7bot_root_url(),
 				"{site_url}" => get_site_url(),
 			);
-
 			$search = array_keys($search_replace);
 			$replace = array_values($search_replace);
-
 			$template_content = str_replace($search, $replace, file_get_contents( $template_path ));
-
 		}
-
 		return $template_content;
-
 	}
-
 	function cf7bot_admin_save_form( $cf7 ) {
-		
 		$post_id = sanitize_text_field($_GET['post']);
-
 		$form_fields = array();
-
 		foreach ($_POST['cf7bot_hs_field'] as $key => $value) {
-
 			if($_POST['cf7bot_cf7_field'][$key] == '' && $value == '') continue;
-
 			$form_fields[$value] = wp_unslash($_POST['cf7bot_cf7_field'][$key]);
-
 		}
         //print_r(serialize($form_fields)); exit;
         update_post_meta($post_id, '_cf7bot_enabled', $_POST['cf7bot_enabled']);
@@ -211,21 +162,15 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
                 $(document).ready(function(){
                     $questions = <?php echo json_encode($form_fields); ?>;
                     $.each($questions,function(k,v){
-                        /*console.log(k)
-                        console.log(v)*/
                         var input = $('[name="'+k+'"]');
                         if(input.length > 0){
                             input.attr('cf-questions', v);
-
                             if(input.hasClass('wpcf7-validates-as-required') == true)
                                 input.attr('required', '');
-
                             if(input.attr('type') == 'email')
                                 input.attr('pattern', '^\\w+@[a-zA-Z_]+?\\.[a-zA-Z]{2,3}$');
                         }
-
                     })
-
                     setTimeout(function() {
                         <?php if($toggle != ''): ?>
                         $(document).on("click", "<?php echo $toggle; ?>", function(){
@@ -242,14 +187,11 @@ if ( is_plugin_active( 'contact-form-7/wp-contact-form-7.php' ) ) {
                             }
                             $(this).addClass("disabled");
                             var form = $(".conversational-form");
-                            console.log(form.hasClass("conversational-form--show"));
                             if (form.hasClass("conversational-form--show") === true) {
                                 $(this).removeClass("active");
-
                                 form.removeClass("conversational-form--show");
                             } else {
                                 $(this).addClass("active");
-
                                 form.addClass("conversational-form--show");
                                 window.ConversationalForm.userInput.setFocusOnInput()
                             }
